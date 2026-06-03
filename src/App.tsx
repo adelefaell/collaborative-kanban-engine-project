@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { BrowserRouter, Route, Routes } from "react-router"
 
-
 // Create a client
 const queryClient = new QueryClient()
 
@@ -11,7 +10,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path={"/"} element={<></>} />
+          <Route path={"/"} element={<>home page</>} />
         </Routes>
       </BrowserRouter>
 

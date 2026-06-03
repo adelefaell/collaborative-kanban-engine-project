@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+
+PACKAGE_MANAGER="${PACKAGE_MANAGER:-pnpm}"
+
+if ! command -v "$PACKAGE_MANAGER" >/dev/null 2>&1; then
+  for pm in pn pnpm npm yarn bun; do
+    if command -v "$pm" >/dev/null 2>&1; then
+      PACKAGE_MANAGER="$pm"
+      break
+    fi
+  done
+fi
+
+if ! command -v "$PACKAGE_MANAGER" >/dev/null 2>&1; then
+  echo "ERROR: No supported package manager found (pnpm, npm, yarn, bun)." >&2
+  exit 127
+fi
+
+
+spinner() {
+  local pid=$1
+  local delay=0.2
+  local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  local i=0
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r[%c] Running..." "${spinstr:$i:1}"
+    i=$(( (i+1) % ${#spinstr} ))
+    sleep "$delay"
+  done
+  printf "\r[✓] Done.      \n"
+}
+
+
+run_task() {
+  local title="$1"
+  local cmd="$2"
+  local log_file="$3"
+
+  echo "--> $title"
+  ( eval "$cmd" >"$log_file" 2>&1 ) &
+  local task_pid=$!
+
+  spinner "$task_pid"
+  if ! wait "$task_pid"; then
+    echo "--> FAILED: $title"
+    echo "    Output:"
+    sed 's/^/    /' "$log_file"
+    return 1
+  fi
+  echo "--> OK: $title"
+  echo
+}
+
+lint_log="$(mktemp)"
+types_log="$(mktemp)"
+cleanup() { rm -f "$lint_log" "$types_log"; }
+trap cleanup EXIT INT TERM
+
+run_task "Run linter with --fix"           "$PACKAGE_MANAGER run lint:fix"  "$lint_log"
+
+if [ -d .git ]; then
+  echo "--> Staging lint fixes"
+  git add .
+  echo "--> Staged"
+  echo
+fi
+
+run_task "Run type checker"                "$PACKAGE_MANAGER run types"     "$types_log"
+
+echo "All pre‑commit checks passed."
