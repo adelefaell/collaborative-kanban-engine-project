@@ -1,75 +1,59 @@
-# React + TypeScript + Vite
+# Collaborative Kanban Engine
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A kanban board built with React, TypeScript, TanStack Query, and dnd-kit.
 
-Currently, two official plugins are available:
+Supports drag-and-drop with optimistic updates, error rollbacks, and simulated conflict resolution.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## How it works
 
-## React Compiler
+**Optimistic updates** — When you drag a card to another column, the UI updates immediately. The actual "server" call happens in the background (with a configurable delay). If the server rejects the move, the card rolls back to where it was.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+**Error simulation** — There's a configurable fail rate (default 20%). When a move fails, the card returns to its original column and a toast shows up explaining what happened.
 
-Note: This will impact Vite dev & build performances.
+**Conflict resolution** — You can trigger a simulated conflict where two users move the same card at the same time. A modal shows both versions (yours and the server's) and lets you pick which one to keep. If you don't pick within 8 seconds, the server version wins.
 
-## Expanding the ESLint configuration
+**Performance** — You can load 2,000 cards to test rendering performance. Cards use `React.memo` and columns filter with `useMemo` to keep things fast.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+pnpm install
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Decisions and Tradeoffs
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Optimistic Updates
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Dragging is a direct manipulation interaction, so waiting for a network response before updating the UI would feel sluggish. The board performs optimistic cache updates through TanStack Query mutations, making card movement appear instantaneous while server validation happens in the background.
+
+### State Modeling
+
+Card state is represented using a TypeScript discriminated union:
+
+- idle
+- dragging
+- pending
+- conflict
+- error
+
+This guarantees type-safe state transitions and prevents impossible UI states.
+
+### Conflict Resolution
+
+Collaborative systems must account for concurrent edits. When the mock server emits a conflict event, a modal presents both the local and server versions of the card. Users can choose which version to keep, while an automatic "server wins" resolution occurs after 8 seconds of inactivity.
+
+### Error Handling
+
+The mock API fails approximately 20% of the time. Failed optimistic updates animate the card back to its original position and display an informative toast describing what happened. Successful mutations are reconciled without visual flicker.
+
+### Performance
+
+The board is designed to remain responsive with large datasets. Cards are memoized using React.memo and column filtering is memoized with useMemo to minimize unnecessary renders. Testing with up to 2,000 cards helps validate drag performance under heavier workloads.
+
+
+## socials
+
+- [https://github.com/adelefaell](https://github.com/adelefaell)
+- [https://www.linkedin.com/in/adell-fael/](https://www.linkedin.com/in/adell-fael/)
+- [https://adelfael.vercel.app/](https://adelfael.vercel.app/)
