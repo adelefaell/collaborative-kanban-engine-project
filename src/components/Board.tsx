@@ -25,7 +25,6 @@ export function Board() {
   const { cards, isLoading, error } = useBoard()
   const { mutate: moveCard } = useMoveCard()
   const { keepClientVersion, acceptServerVersion } = useConflictResolver()
-  useConflictEvents()
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
 

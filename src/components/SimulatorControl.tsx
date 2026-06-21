@@ -17,42 +17,31 @@ export function SimulatorControl() {
   const triggerConflict = useTriggerConflict()
 
   const [errorRate, setErrorRate] = useState(20)
-  const [minLatency, setMinLatency] = useState(600)
-  const [maxLatency, setMaxLatency] = useState(1200)
+  const [latency, setLatency] = useState(600)
 
   useEffect(() => {
     const s = getSettings()
     setErrorRate(Math.round(s.errorRate * 100))
-    setMinLatency(s.minLatency)
-    setMaxLatency(s.maxLatency)
+    setLatency(s.minLatency)
   }, [])
 
-  const persist = (err: number, min: number, max: number) => {
+  const persist = (err: number, lat: number) => {
     saveSettings({
       errorRate: err / 100,
-      minLatency: min,
-      maxLatency: max,
+      minLatency: lat,
+      maxLatency: lat,
       autoConflictEnabled: false,
     })
   }
 
-  const handleSlider = (type: "error" | "min" | "max", val: number) => {
-    let e = errorRate
-    let mn = minLatency
-    let mx = maxLatency
-
+  const handleSlider = (type: "error" | "latency", val: number) => {
     if (type === "error") {
-      e = val
       setErrorRate(val)
-    } else if (type === "min") {
-      mn = Math.min(val, maxLatency)
-      setMinLatency(mn)
+      persist(val, latency)
     } else {
-      mx = Math.max(val, minLatency)
-      setMaxLatency(mx)
+      setLatency(val)
+      persist(errorRate, val)
     }
-
-    persist(e, mn, mx)
   }
 
   const handleLoadBulk = () => {
@@ -78,7 +67,7 @@ export function SimulatorControl() {
   return (
     <div className="w-full border border-slate-800 rounded bg-slate-800/30 p-4">
       <div className="flex flex-wrap gap-6 items-start">
-        <div className="space-y-1 min-w-25">
+        <div className="space-y-1">
           <p className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">
             Board state
           </p>
@@ -104,37 +93,23 @@ export function SimulatorControl() {
 
         <div className="flex-1 min-w-45 space-y-2">
           <p className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">
-            Latency — {minLatency}ms to {maxLatency}ms
+            Latency — {latency}ms
           </p>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="w-8 shrink-0">Min</span>
-              <input
-                type="range"
-                min="100"
-                max="2000"
-                step="100"
-                value={minLatency}
-                onChange={(e) => handleSlider("min", Number(e.target.value))}
-                className="w-full h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-blue-500"
-              />
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="w-8 shrink-0">Max</span>
-              <input
-                type="range"
-                min="100"
-                max="3000"
-                step="100"
-                value={maxLatency}
-                onChange={(e) => handleSlider("max", Number(e.target.value))}
-                className="w-full h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-blue-500"
-              />
-            </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="w-8 shrink-0">Delay</span>
+            <input
+              type="range"
+              min="100"
+              max="3000"
+              step="100"
+              value={latency}
+              onChange={(e) => handleSlider("latency", Number(e.target.value))}
+              className="w-full h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-blue-500"
+            />
           </div>
         </div>
 
-        <div className="flex-1 min-w-40 space-y-2">
+        <div className="flex-1 min-w-45 space-y-2">
           <p className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">
             Fail rate — <span className="text-rose-400">{errorRate}%</span>
           </p>
