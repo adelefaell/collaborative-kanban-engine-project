@@ -57,3 +57,5 @@ The board is designed to remain responsive with large datasets. Cards are memoiz
 - [https://github.com/adelefaell](https://github.com/adelefaell)
 - [https://www.linkedin.com/in/adell-fael/](https://www.linkedin.com/in/adell-fael/)
 - [https://adelfael.vercel.app/](https://adelfael.vercel.app/)
+
+**Live preview:** https://adelefaell.github.io/collaborative-kanban-engine-project/
